@@ -1,12 +1,36 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+
+export const getTodosAsync = createAsyncThunk(
+  'todos/getTodosAsync',
+  async () => {
+    const response = await fetch('http://localhost:7000/todos')
+    if(response.ok){
+      const todos = await response.json()
+      return {todos}
+    }
+  }
+)
+
+export const addTodoAsync = createAsyncThunk(
+  'todos/addTodoAsync',
+  async(payload) =>{
+    const response = await fetch('http://localhost:7000/todos',{
+    method:'POST',
+    headers:{
+      'Content-Type': 'application/json',
+    },
+      body: JSON.stringify({title: payload.title}),
+    })
+    if (response.ok){
+      const todo = await response.json()
+      return {todo}
+    }
+  }
+)
 
 const todoSlice = createSlice({
   name: "todos",
-  initialState: [
-    { id: 1, title: "todo1", completed: false },
-    { id: 2, title: "todo2", completed: false },
-    { id: 3, title: "todo3", completed: true }
-  ],
+  initialState: [ ],
   reducers: {
     addTodo: (state, action) => {
       const newTodo = {
@@ -22,6 +46,18 @@ const todoSlice = createSlice({
     },
     deleteTodo: (state, action) => {
       return state.filter((todo) => todo.id !== action.payload.id);
+    }
+  },
+  extraReducers: {
+    [getTodosAsync.pending]: (state, action) =>{
+      console.log('fetching data...')
+    },
+    [getTodosAsync.fulfilled]: (state, action) =>{
+      console.log('fetching data successfully!...')
+      return action.payload.todos
+    },
+    [addTodoAsync.fulfilled]: (state, action) =>{
+      state.push(action.payload.todo)
     }
   }
 });
